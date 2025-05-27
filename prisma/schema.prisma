@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int         @id @default(autoincrement())
+  username      String      @unique(map: "username") @db.VarChar(255)
+  email         String      @unique(map: "email") @db.VarChar(255)
+  password_hash String      @db.VarChar(255)
+  role          users_role? @default(user)
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamp(0)
+  notes         CaseNote[]
+  cases         Case[]
+
+  @@map("users")
+}
+
+model TIReport {
+  id        Int      @id @default(autoincrement())
+  title     String   @db.Text
+  content   String?  @db.Text
+  summary   String?  @db.Text
+  sourceUrl String?  @map("source_url") @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+
+  @@map("ti_reports")
+}
+
+model IOC {
+  id           Int              @id @default(autoincrement())
+  type         iocs_type
+  value        String           @db.Text
+  source       String?          @db.VarChar(255)
+  riskLevel    iocs_risk_level? @default(low) @map("risk_level")
+  checkedAt    DateTime         @default(now()) @map("checked_at") @db.Timestamp(0)
+  linkedCaseId Int?             @map("linked_case_id")
+  linkedCase   Case?            @relation(fields: [linkedCaseId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "iocs_ibfk_1")
+
+  @@index([linkedCaseId], map: "linked_case_id")
+  @@map("iocs")
+}
+
+model WazuhAlert {
+  id          Int                    @id @default(autoincrement())
+  timestamp   DateTime               @default(now()) @db.Timestamp(0)
+  agent       String?                @db.VarChar(255)
+  ruleId      Int?                   @map("rule_id")
+  description String?                @db.Text
+  severity    wazuh_alerts_severity? @default(low)
+  rawLog      String?                @map("raw_log") @db.Text
+
+  @@map("wazuh_alerts")
+}
+
+model Case {
+  id          Int             @id @default(autoincrement())
+  title       String          @db.VarChar(255)
+  description String?         @db.Text
+  status      cases_status?   @default(Open)
+  severity    cases_severity? @default(Medium)
+  createdById Int?            @map("created_by")
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamp(0)
+  notes       CaseNote[]
+  createdBy   User?           @relation(fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "cases_ibfk_1")
+  iocs        IOC[]
+
+  @@index([createdById], map: "created_by")
+  @@map("cases")
+}
+
+model CaseNote {
+  id        Int      @id @default(autoincrement())
+  caseId    Int      @map("case_id")
+  authorId  Int      @map("author_id")
+  content   String   @db.Text
+  timestamp DateTime @default(now()) @db.Timestamp(0)
+  case      Case     @relation(fields: [caseId], references: [id], onUpdate: Restrict, map: "case_notes_ibfk_1")
+  author    User     @relation(fields: [authorId], references: [id], onUpdate: Restrict, map: "case_notes_ibfk_2")
+
+  @@index([authorId], map: "author_id")
+  @@index([caseId], map: "case_id")
+  @@map("case_notes")
+}
+
+enum iocs_type {
+  IP
+  URL
+  hash
+  domain
+}
+
+enum cases_status {
+  Open
+  In_Progress @map("In Progress")
+  Closed
+}
+
+enum cases_severity {
+  Low
+  Medium
+  High
+  Critical
+}
+
+enum iocs_risk_level {
+  low
+  medium
+  high
+}
+
+enum users_role {
+  admin
+  user
+}
+
+enum wazuh_alerts_severity {
+  low
+  medium
+  high
+  critical
+}
