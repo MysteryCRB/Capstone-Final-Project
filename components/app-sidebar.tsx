@@ -67,7 +67,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-4 py-2">
+        <div className="flex items-center gap-2 px-6 py-4">
           <Shield className="h-6 w-6 text-blue-600" />
           <span className="font-bold text-lg">WardenX</span>
           <Badge variant="outline" className="ml-auto text-xs">
@@ -77,12 +77,12 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="px-6">Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton onClick={() => handleNavigation(item.url)}>
+                  <SidebarMenuButton onClick={() => handleNavigation(item.url)} className="px-6">
                     <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
@@ -93,7 +93,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <div className="px-4 py-2 text-sm text-muted-foreground">WardenX SOC v1.0</div>
+        <div className="px-6 py-4 text-sm text-muted-foreground">WardenX SOC v1.0</div>
       </SidebarFooter>
     </Sidebar>
   )

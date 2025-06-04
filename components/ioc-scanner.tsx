@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Search, Shield, AlertTriangle, CheckCircle } from "lucide-react"
 import { apiService } from "../services/api"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 
 interface ScanResult {
   source: string
@@ -17,11 +19,18 @@ interface ScanResult {
   timestamp: string
 }
 
+const availableSources = [
+  { id: "virustotal", name: "VirusTotal", description: "Comprehensive threat intelligence" },
+  { id: "abuseipdb", name: "AbuseIPDB", description: "IP reputation database" },
+  { id: "threatfox", name: "ThreatFox", description: "Malware and threat intelligence" },
+]
+
 export function IOCScanner() {
   const [iocValue, setIocValue] = useState("")
   const [iocType, setIocType] = useState<string>("")
   const [scanning, setScanning] = useState(false)
   const [scanResults, setScanResults] = useState<ScanResult[]>([])
+  const [selectedSources, setSelectedSources] = useState<string[]>(["virustotal"])
 
   const scanIOC = async () => {
     if (!iocValue || !iocType) return
@@ -30,19 +39,20 @@ export function IOCScanner() {
     const results: ScanResult[] = []
 
     try {
-      // Scan with VirusTotal
-      const vtResult = await apiService.scanIOCVirusTotal(iocValue, iocType)
-      if (vtResult) {
-        results.push({
-          source: "VirusTotal",
-          result: vtResult,
-          risk_level: vtResult.malicious > 0 ? "high" : "low",
-          timestamp: new Date().toISOString(),
-        })
+      // Scan with selected sources
+      if (selectedSources.includes("virustotal")) {
+        const vtResult = await apiService.scanIOCVirusTotal(iocValue, iocType)
+        if (vtResult) {
+          results.push({
+            source: "VirusTotal",
+            result: vtResult,
+            risk_level: vtResult.malicious > 0 ? "high" : "low",
+            timestamp: new Date().toISOString(),
+          })
+        }
       }
 
-      // Scan with AbuseIPDB (for IPs)
-      if (iocType === "IP") {
+      if (selectedSources.includes("abuseipdb") && iocType === "IP") {
         const abuseResult = await apiService.scanIOCAbuseIPDB(iocValue)
         if (abuseResult) {
           results.push({
@@ -54,15 +64,16 @@ export function IOCScanner() {
         }
       }
 
-      // Scan with ThreatFox
-      const threatFoxResult = await apiService.scanIOCThreatFox(iocValue)
-      if (threatFoxResult) {
-        results.push({
-          source: "ThreatFox",
-          result: threatFoxResult,
-          risk_level: threatFoxResult.threat_type ? "medium" : "low",
-          timestamp: new Date().toISOString(),
-        })
+      if (selectedSources.includes("threatfox")) {
+        const threatFoxResult = await apiService.scanIOCThreatFox(iocValue)
+        if (threatFoxResult) {
+          results.push({
+            source: "ThreatFox",
+            result: threatFoxResult,
+            risk_level: threatFoxResult.threat_type ? "medium" : "low",
+            timestamp: new Date().toISOString(),
+          })
+        }
       }
 
       setScanResults(results)
@@ -71,6 +82,14 @@ export function IOCScanner() {
     } finally {
       setScanning(false)
     }
+  }
+
+  const toggleSource = (sourceId: string) => {
+    setSelectedSources((prev) =>
+      prev.includes(sourceId)
+        ? prev.filter((id) => id !== sourceId)
+        : [...prev, sourceId]
+    )
   }
 
   const getRiskBadgeColor = (risk: string) => {
@@ -134,10 +153,30 @@ export function IOCScanner() {
               onChange={(e) => setIocValue(e.target.value)}
               className="flex-1"
             />
-            <Button onClick={scanIOC} disabled={!iocValue || !iocType || scanning}>
+            <Button onClick={scanIOC} disabled={!iocValue || !iocType || scanning || selectedSources.length === 0}>
               <Search className={`h-4 w-4 mr-2 ${scanning ? "animate-spin" : ""}`} />
               {scanning ? "Scanning..." : "Scan"}
             </Button>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Select Sources</Label>
+            <div className="grid gap-2">
+              {availableSources.map((source) => (
+                <div key={source.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={source.id}
+                    checked={selectedSources.includes(source.id)}
+                    onCheckedChange={() => toggleSource(source.id)}
+                    disabled={source.id === "abuseipdb" && iocType !== "IP"}
+                  />
+                  <Label htmlFor={source.id} className="flex flex-col">
+                    <span className="font-medium">{source.name}</span>
+                    <span className="text-xs text-muted-foreground">{source.description}</span>
+                  </Label>
+                </div>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>

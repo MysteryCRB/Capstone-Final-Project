@@ -29,10 +29,43 @@ export class APIService {
       id: 1,
       title: "Suspicious Network Activity",
       description: "Unusual traffic patterns detected from internal network",
-      status: "Open",
+      status: "New",
       severity: "High",
+      priority: "P2",
+      category: "Suspicious Activity",
+      subcategory: "Network Scan",
+      source: "SIEM",
+      sla_status: "Within SLA",
+      sla_due_date: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
       created_by: 1,
       created_at: "2024-01-15T10:30:00Z",
+    },
+  ]
+
+  private mockSLAPolicies = [
+    {
+      id: 1,
+      priority: "P1",
+      response_time: 30, // 30 minutes
+      resolution_time: 240, // 4 hours
+    },
+    {
+      id: 2,
+      priority: "P2",
+      response_time: 120, // 2 hours
+      resolution_time: 480, // 8 hours
+    },
+    {
+      id: 3,
+      priority: "P3",
+      response_time: 240, // 4 hours
+      resolution_time: 1440, // 24 hours
+    },
+    {
+      id: 4,
+      priority: "P4",
+      response_time: 480, // 8 hours
+      resolution_time: 2880, // 48 hours
     },
   ]
 
@@ -412,6 +445,33 @@ export class APIService {
       }
     } catch (error) {
       console.error("Create Wazuh Alert Error:", error)
+      return null
+    }
+  }
+
+  // SLA Management
+  async fetchSLAPolicies(): Promise<any[]> {
+    try {
+      return this.mockSLAPolicies
+    } catch (error) {
+      console.error("Fetch SLA Policies Error:", error)
+      return []
+    }
+  }
+
+  async updateSLAPolicy(policyId: number, updateData: any): Promise<any> {
+    try {
+      const index = this.mockSLAPolicies.findIndex(p => p.id === policyId)
+      if (index === -1) return null
+
+      const updatedPolicy = {
+        ...this.mockSLAPolicies[index],
+        ...updateData,
+      }
+      this.mockSLAPolicies[index] = updatedPolicy
+      return updatedPolicy
+    } catch (error) {
+      console.error("Update SLA Policy Error:", error)
       return null
     }
   }

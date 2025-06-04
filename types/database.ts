@@ -39,11 +39,31 @@ export interface Case {
   id: number
   title: string
   description: string
-  status: "Open" | "In Progress" | "Closed"
+  status: "New" | "Triage" | "In Progress" | "Escalated" | "Closed" | "False Positive"
   severity: "Low" | "Medium" | "High" | "Critical"
+  priority: "P4" | "P3" | "P2" | "P1"
+  category: IncidentCategory
+  subcategory: string
+  source: "SIEM" | "Email" | "Phone" | "Manual" | "Other"
+  sla_status: "Within SLA" | "At Risk" | "Breached"
+  sla_due_date: string
+  assigned_to?: number
   created_by: number
   created_at: string
+  triage_notes?: string
+  false_positive_reason?: string
+  escalation_reason?: string
 }
+
+export type IncidentCategory =
+  | "Malware"
+  | "Phishing"
+  | "Unauthorized Access"
+  | "Data Leakage"
+  | "Suspicious Activity"
+  | "Policy Violation"
+  | "System Compromise"
+  | "Other"
 
 export interface CaseNote {
   id: number
@@ -51,4 +71,12 @@ export interface CaseNote {
   author_id: number
   content: string
   timestamp: string
+  note_type: "Triage" | "Investigation" | "Escalation" | "Resolution" | "General"
+}
+
+export interface SLAPolicy {
+  id: number
+  priority: "P1" | "P2" | "P3" | "P4"
+  response_time: number // in minutes
+  resolution_time: number // in minutes
 }
